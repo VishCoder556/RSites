@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+</head>
+<body>
+    <div id="login1">
+        <p>The owner has a special code you need to enter. Make sure to enter it properly.</p>
+        <input type="password" id="password" placeholder="Enter your password">
+        <button onClick="Login()">Login</button>
+        <p id="message"></p>
+    </div>
+    <div id="login2" hidden="true">
+        Create your own account<br>
+        <br>Username: <input type="text" id="username1" placeholder="Enter your username"><br>
+        <br>Password: <input type="password" id="password1" placeholder="Enter your password">
+        <br><br><button id="createAccountBtn" onClick="CreateAccount()">Create account</button>
+    </div>
+    <p id="error" style="color:red;"></p>
+
+    <script>
+        var accountAlreadyCreated = false;
+        var loggined = false;
+        if (localStorage.username && localStorage.password){accountAlreadyCreated = true;};
+        function Done(){
+            if (loggined){localStorage.setItem('login', 'true');};
+            window.location.href = "/";
+        };
+        async function checkUsername() {
+            try {
+                const response = await fetch('/check_username', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: localStorage.username
+                    }),
+                });
+
+                const data = await response.json();
+                const messageElement = document.getElementById('message');
+
+                if (data.status === 'success') {
+                    console.log("Logging you in");
+                    // If you want to redirect, uncomment the next line
+                    // window.location.href = "/";
+                    return 0; // Return 0 for success
+                } else {
+                    messageElement.textContent = data.message;
+                    return -1; // Return -1 if the username check fails
+                }
+            } catch (error) {
+                return -1; // Return -1 in case of error
+            }
+        }
+
+        async function CreateAccount(){
+            if (accountAlreadyCreated){
+                console.log(document.getElementById("username1").value, localStorage.username, document.getElementById("password1").value, localStorage.password);
+                if (document.getElementById("username1").value == localStorage.username && document.getElementById("password1").value == localStorage.password){
+                    localStorage.setItem('account', 'true');
+                    Done();
+                }else {
+                    console.error("Still failed");
+                    document.getElementById("error").innerHTML = "";
+                    document.getElementById("error").innerHTML = "Wrong username or password<br>";
+                };
+            }else {
+                if (!document.getElementById("username1").value || !document.getElementById("password1").value){
+                    console.error("Empty username or password");
+                }else {
+                    localStorage.setItem('account', 'true');
+                    localStorage.username = document.getElementById("username1").value;
+                    localStorage.password = document.getElementById("password1").value;
+                    var res = await checkUsername();
+                    if (res == 0) {
+                        Done();
+                    }else {
+                        localStorage.removeItem("account");
+                        document.getElementById("error").innerHTML += "Your username is already taken";
+                    }
+                }
+            }
+            ;
+        };
+        function Login(){
+            const password = document.getElementById('password').value;
+            
+            fetch('/verify-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ password: password }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                const messageElement = document.getElementById('message');
+                if (data.status === 'success') {
+                    messageElement.textContent = data.message;
+                    loggined = true;
+                    document.getElementById("login1").hidden = true;
+                    document.getElementById("login2").hidden = false;
+                    if(localStorage.username && localStorage.password) {
+                        document.getElementById("createAccountBtn").innerHTML = "Login";
+                    }
+                    // window.location.href = "/";
+                } else {
+                    messageElement.textContent = data.message;
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        };
+    </script>
+</body>
+</html>

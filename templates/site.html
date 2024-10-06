@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hiiiii</title>
+</head>
+<body>
+    <button onClick="publish()" style="cursor: pointer; background-color: #044370; /* Green */border: none;color: white;padding: 15px 32px;text-align: center;text-decoration: none;display: inline-block;font-size: 16px;">Publish</button>
+    <span style="width: 200px;" contenteditable="true" id="website_name">Untitled</span>
+    <button onClick="copyLink()" style="cursor: pointer; float: right; background-color: #04AA6D; /* Green */border: none;color: white;padding: 15px 32px;text-align: center;text-decoration: none;display: inline-block;font-size: 16px;">Copy Link</button>
+    <button onClick="preview()" style="cursor: pointer; float: right; background-color: #04AA6D; /* Green */border: none;color: white;padding: 15px 32px;text-align: center;text-decoration: none;display: inline-block;font-size: 16px; margin-right: 20px;">Preview</button>
+    <br><br>
+    <div style="float: left; padding: 100px;height: 64vh;border: 10px solid black;" id="dragThing">
+        <center><button id="btn" ondragstart="drag(event)" draggable="true" class="draggable" style="left: 20px">Button</button>
+            <br><br><br><span id="lbl" ondragstart="drag(event)" draggable="true" class="draggable" style="left: 20px">Label</span>
+            <br><br><br><input id="input" ondragstart="drag(event)" type="text" placeholder="Input" class="draggable" draggable="true" style="left: 20px" disabled>
+        </center>
+    </div>
+
+    <div style="padding: 70px;height: 72vh;width: 87vw;border: 10px solid black;" id="div1" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+    <script>
+
+    if (!localStorage.login || !localStorage.account){
+        window.location.href = "/login";
+    };
+        var name = "{{page}}";
+        var page_name = localStorage.getItem("File"+name+"name");
+        if (!page_name){
+            localStorage.setItem("File"+name+"name", "Untitled");
+        };
+        document.getElementById("website_name").innerHTML = localStorage.getItem("File"+name+"name");
+        var elementDropped = false;
+        var element;
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drag(ev) {
+            if (ev.target.classList.contains("alreadyDropped")) {
+                elementDropped = true;
+            };
+            element = ev.target;
+            ev.dataTransfer.setData("text", ev.target.id);
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            var data = ev.dataTransfer.getData("text");
+            var draggedElement = document.getElementById(data);
+            var dropArea = ev.target;
+
+            // Get the mouse position relative to the dropArea
+            var divRect = document.getElementById("div1").getBoundingClientRect()
+            var rect = dropArea.getBoundingClientRect();
+            var x = ev.clientX - rect.left - divRect.left + 4;
+            var y = ev.clientY - rect.top + divRect.top - 13;
+
+            // Move the dragged element to the mouse position
+            draggedElement.style.left = x + 'px';
+            draggedElement.style.top = y + 'px';
+            var alreadyDropped = draggedElement.classList.contains('alreadyDropped');
+            draggedElement.contentEditable=true;
+            draggedElement.removeAttribute('disabled');
+            draggedElement.focus();
+            draggedElement.classList.add("alreadyDropped");
+            
+            if (!elementDropped) {dropArea.appendChild(draggedElement)}else {
+                element.style.left = x + 'px';
+                element.style.top = y + 'px';
+                element = 0;
+                elementDropped = false;
+            };
+
+            if (alreadyDropped) {
+            }else{
+            document.getElementById("dragThing").innerHTML = "<center><button id=\"btn\" ondragstart=\"drag(event)\" draggable=\"true\" class=\"draggable\" style=\"left: 20px\">Button</button>    <br><br><br><span id=\"lbl\" ondragstart=\"drag(event)\" draggable=\"true\" class=\"draggable\" style=\"left: 20px\">Label</span>    <br><br><br><input id=\"input\" ondragstart=\"drag(event)\" type=\"text\" placeholder=\"Input\" class=\"draggable\" draggable=\"true\" style=\"left: 20px\" disabled></center>";
+            }
+        }
+        // document.getElementById("text").value = document.getElementById("text").value.replaceAll("<br>", "\n");
+        function copyLink(){
+            navigator.clipboard.writeText(window.location.origin + "/sites?page="+"{{page}}");
+        }
+        function preview(){
+            window.open("/sites?page="+"{{page}}", '_blank');
+        }
+        function Publish(template, content) {
+            if (localStorage.getItem("File"+name+"name") != document.getElementById("website_name").innerHTML){
+                fetch('/rename', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        old_name: localStorage.getItem("File"+name+"name"),
+                        new_name: document.getElementById("website_name").innerHTML,
+                        official_name: "{{page}}",
+                        username: localStorage.username
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        // Handle errors based on the response status
+                        throw new Error(`Error: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Route created successfully:', data);
+                    // Additional logic for successful creation can go here
+                })
+                .catch((error) => {
+                    console.error('Failed to create route:', error);
+                });
+                localStorage.setItem("File"+name+"name", document.getElementById("website_name").innerHTML)
+                localStorage.setItem("File"+localStorage.getItem("File"+name+"name")+"name", localStorage.getItem("File"+name+"name"));
+                localStorage.removeItem("File{{page}}name");
+                window.location.href = "/createSite?page="+document.getElementById("website_name").innerHTML;
+            };
+            fetch('/publish', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    template: template,
+                    content: content,
+                    username: localStorage.username
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    // Handle errors based on the response status
+                    throw new Error(`Error: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Route created successfully:', data);
+                // Additional logic for successful creation can go here
+            })
+            .catch((error) => {
+                console.error('Failed to create route:', error);
+            });
+
+        }
+        function publish(){
+            var code = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Document</title>\n</head>\n<body>\n";
+            Array.from(document.getElementById("div1").children).forEach((element) => {
+                if(element.id == "btn"){
+                    code += "<button id=\"btn\" style=\"position: absolute; left: "+element.style.left+"; top:"+element.style.top+"\">"+element.innerHTML+"</button>\n";
+                }else if(element.id == "lbl"){
+                    code += "<p id=\"lbl\" style=\"position: absolute; left: "+element.style.left+"; top:"+element.style.top+"\">"+element.innerHTML+"</p>\n";
+                }else if(element.id=="input"){
+                    code += "<input type=\"text\" id=\"lbl\" style=\"position: absolute; left: "+element.style.left+"; top:"+element.style.top+"\" placeholder=\""+element.value+"\">\n";
+                };
+            });
+            code += "<style>#btn {width: 100px;height: 50px;};</style>\n</body>\n</html>"
+            console.log(code);
+            // console.log(document.getElementById("text").value);
+            Publish("{{page}}", code);
+        }
+    </script>
+    <style>
+        .draggable {
+            position: absolute;
+        }
+        button.draggable{
+            width: 100px;
+            height: 50px;
+        }
+    </style>
+</body>
+</html>
