@@ -79,10 +79,10 @@
         }
         // document.getElementById("text").value = document.getElementById("text").value.replaceAll("<br>", "\n");
         function copyLink(){
-            navigator.clipboard.writeText(window.location.origin + "/sites?page="+"{{page}}");
+            navigator.clipboard.writeText(window.location.origin + "/sites?page="+localStorage.username+"_"+"{{page}}");
         }
         function preview(){
-            window.open("/sites?page="+"{{page}}", '_blank');
+            window.open("/sites?page="+localStorage.username+"_"+"{{page}}", '_blank');
         }
         function Publish(template, content) {
             if (localStorage.getItem("File"+name+"name") != document.getElementById("website_name").innerHTML){

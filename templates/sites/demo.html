@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+<center><p id="lbl">This is a demo.</p></center><br>
+<center><span id="lbl">First Name:</span>
+<input type="text" id="lbl" placeholder="Put your First Name here"><br><br>
+<span id="lbl">Last Name:</span>
+<input type="text" id="lbl" placeholder="Put your Last Name here"><br><br>
+<button id="btn" onClick="Login()">Login</button></center>
+<p id="text"></p>
+<style>#btn {width: 100px;height: 50px;};</style>
+<script>
+    function Login(){
+        console.log("Welcome!");
+        document.getElementById("text").innerHTML = "Welcome!";
+    };
+</script>
+</body>
+</html>
