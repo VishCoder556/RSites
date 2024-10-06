@@ -88,11 +88,8 @@ def publish():
         content = data.get('content')
         username = data.get('username')
         if template:
-            if not os.path.exists("templates/sites/"+username+"_"+template+".html"):
-                with open("templates/sites/"+username+"_"+template+".html", 'w') as f:
-                    f.write(content)
-            else:
-                return jsonify({'status': 'error', 'message': 'File already exists'}), 400
+            with open("templates/sites/"+template+".html", 'w') as f:
+                f.write(content)
             # Return success response with created route path
             return jsonify({'status': 'success'}), 201
 
@@ -156,7 +153,7 @@ def createSite():
         content = open("templates/sites/"+argument+".html", "r").read()
         return render_template("site.html", page=argument, text=content)
     else:
-        return "The page doesn't exist. If this was brought to you will renaming the document, please reload"
+        return render_template("site.html", page=argument, text="None")
 
 if __name__ == '__main__':
     app.run(debug=True)

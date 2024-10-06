@@ -3,24 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hiiiii</title>
+    <title id="title">{{page}}</title>
 </head>
 <body>
+    <style>
+        .draggable {
+            position: absolute;
+        }
+        button.btn{
+            width: 100px;
+            height: 50px;
+        }
+
+        .lbl.draggable {
+            color: black;
+            background-color: rgba(0, 0, 0, 0); 
+        }
+        .btn.draggable {
+            color: black;
+            background-color: #EFEFEF
+        }
+        #dragThing {
+            float: left; 
+            padding: 100px;
+            height: 64vh;
+            border: 10px solid black;
+            overflow: auto;
+        }
+        textarea {
+            resize: none;
+        };
+    </style>
     <button onClick="publish()" style="cursor: pointer; background-color: #044370; /* Green */border: none;color: white;padding: 15px 32px;text-align: center;text-decoration: none;display: inline-block;font-size: 16px;">Publish</button>
     <span style="width: 200px;" contenteditable="true" id="website_name">Untitled</span>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span ondrop="dropTrash(event)" ondragover="allowDrop(event)">Trash</span>
+    &nbsp;&nbsp;&nbsp;<span id="error" style="color: red"></span>
     <button onClick="copyLink()" style="cursor: pointer; float: right; background-color: #04AA6D; /* Green */border: none;color: white;padding: 15px 32px;text-align: center;text-decoration: none;display: inline-block;font-size: 16px;">Copy Link</button>
     <button onClick="preview()" style="cursor: pointer; float: right; background-color: #04AA6D; /* Green */border: none;color: white;padding: 15px 32px;text-align: center;text-decoration: none;display: inline-block;font-size: 16px; margin-right: 20px;">Preview</button>
     <br><br>
-    <div style="float: left; padding: 100px;height: 64vh;border: 10px solid black;" id="dragThing">
-        <center><button id="btn" ondragstart="drag(event)" draggable="true" class="draggable" style="left: 20px">Button</button>
-            <br><br><br><span id="lbl" ondragstart="drag(event)" draggable="true" class="draggable" style="left: 20px">Label</span>
-            <br><br><br><input id="input" ondragstart="drag(event)" type="text" placeholder="Input" class="draggable" draggable="true" style="left: 20px" disabled>
+    <div id="dragThing">
+        <center><button id="btn" ondragstart="drag(event)" draggable="true" class="btn" style="left: 20px">Button</button>
+            <br><br><br><span ondragstart="drag(event)" draggable="true" class="lbl" style="left: 20px">Label</span>
+            <br><br><br><input ondragstart="drag(event)" type="text" placeholder="Input" class="input" draggable="true" style="left: 20px" disabled>
+            
         </center>
     </div>
-
-    <div style="padding: 70px;height: 72vh;width: 87vw;border: 10px solid black;" id="div1" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+    <div style="padding: 70px;height: 72vh;width: 87vw;border: 10px solid black; " id="div1" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <span id="eventEditor" style="float: right; text-align: center; width: 15vw;"></span>
+    </div>
+    <span id="___HTMLTEXT" style="color: rgba(0, 0, 0, 0); display: none;" hidden>{{text}}</span>
     <script>
-
+        if (document.getElementById("___HTMLTEXT").innerText != "None"){
+            document.getElementById("div1").innerHTML = document.getElementById("___HTMLTEXT").innerText.replaceAll("<!DOCTYPE html>", "").replaceAll("<!DOCTYPE html>", "").replaceAll("<meta charset=\"UTF-8\">", "").replaceAll("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">", "") + document.getElementById("div1").innerHTML;
+        };
+        document.getElementById("title").innerHTML = "Site " + "{{page}}".substring("{{page}}".indexOf("_") + 1);
     if (!localStorage.login || !localStorage.account){
         window.location.href = "/login";
     };
@@ -35,21 +71,131 @@
         function allowDrop(ev) {
             ev.preventDefault();
         }
+        var inputNum = 0;
+        var divNum = 0;
+        var btnNum = 0;
+        var lblNum = 0;
+        var authformNum = 0;
+        var selectedEventEditor;
+        var alreadyDroppedE = false;
+        var alreadyDroppedEF = false;
+
 
         function drag(ev) {
             if (ev.target.classList.contains("alreadyDropped")) {
                 elementDropped = true;
             };
             element = ev.target;
+            eval(Array.from(ev.target.classList)[0] + "Num" + "++");
+            ev.target.id = eval(ev.target.classList[0] + "Num");
             ev.dataTransfer.setData("text", ev.target.id);
         }
-
-        function drop(ev) {
+        function dropTrash(ev){
             ev.preventDefault();
             var data = ev.dataTransfer.getData("text");
             var draggedElement = document.getElementById(data);
+            if (draggedElement.classList.contains("draggable")) {draggedElement.remove();}
+        };
+        function LabelChange(){
+            selectedEventEditor.innerHTML = "<span contenteditable=\"true\">" + document.getElementById("__LabelEventEditor").value.replaceAll("\n", "<br>") + "</span>&nbsp;&nbsp;";
+        };
+        function ButtonTextChanged(){
+            selectedEventEditor.innerHTML = document.getElementById("__ButtonText").value;
+        };
+        var defaultValueOfElements = "<center><button ondragstart=\"drag(event)\" draggable=\"true\" class=\"btn\" style=\"left: 20px\">Button</button>    <br><br><br><span ondragstart=\"drag(event)\" draggable=\"true\" class=\"lbl\" style=\"left: 20px\">Label</span>    <br><br><br><input ondragstart=\"drag(event)\" type=\"text\" placeholder=\"Input\" class=\"input\" draggable=\"true\" style=\"left: 20px\" disabled>";
+        
+        function dropEl(ev, host){
+            ev.preventDefault();
+            var data = ev.dataTransfer.getData("text");
+            var draggedElement = document.getElementById(data);
+            const clone = draggedElement.cloneNode(true);
+            // console.log(clone, clone.parentElement);
+            document.getElementById("div1").appendChild(clone);
+            draggedElement.style.left = "auto";
+            draggedElement.style.top = "auto";
+            if (alreadyDroppedE){
+                host.innerHTML = "";
+            };
+            document.getElementById("dragThing").innerHTML = defaultValueOfElements;
+            if (!draggedElement.classList.contains("input")) {
+                console.error("Error: First Field for Authentication Button has to be a Text Input");
+                document.getElementById("error").innerHTML = "Authentication Field Has To Be Text Input";
+            }else {
+                draggedElement.hidden = true;
+                host.appendChild(draggedElement);
+                host.innerHTML += "Item";
+                document.getElementById("error").innerHTML = "";
+            };
+            document.getElementById(document.getElementById("eventEditor").getAttribute("parent")).setAttribute("attributedItem1", data);
+            alreadyDroppedEF = true;
+            alreadyDroppedE = true;
+        }
+        function rgbToHex(rgb) {
+            const rgbArray = rgb.match(/\d+/g); // Extract the numeric values from the RGB string
+            return `#${((1 << 24) + (parseInt(rgbArray[0]) << 16) + (parseInt(rgbArray[1]) << 8) + parseInt(rgbArray[2])).toString(16).slice(1)}`;
+        }
+        function eventEditorLoad(el){
+            selectedEventEditor = el;
+            document.getElementById("eventEditor").innerHTML = "<center>Event editor</center><hr>";
+            if (el.classList[0] == "btn"){
+                document.getElementById("eventEditor").innerHTML += "Button<br>Button Text: <textarea id=\"__ButtonText\" onchange=\"ButtonTextChanged()\">"+el.innerHTML+"</textarea><br>Background Color: <input type=\"color\" id=\"bgcolorInput_EventEditor\" value=\"#EFEFEF\"><br>Color: <input type=\"color\" id=\"colorInput_EventEditor\" value=\"#000000\"><br>Button Type: <select name=\"type\" id=\"EventEditor_btntype\"><option value=1>Default</option><option value=2>Authentication</option></select><br><span id=\"Event_ExpandableBtn\"></span>";
+                document.getElementById("bgcolorInput_EventEditor").addEventListener('input', function() {
+                    const color = this.value;
+                    el.style.backgroundColor = color;
+                });
+                document.getElementById("colorInput_EventEditor").addEventListener('input', function() {
+                    const color = this.value;
+                    el.style.color = color;
+                });
+                var Event_Expandable_Txt="<br>First Field: <span type=\"type\" id=\"eventEditor_auth1field\" style=\"padding: 20px; border: 1px dashed black;\" ondrop=\"dropEl(event, this)\" ondragover=\"allowDrop(event)\"></span><br><br><br><br><br><br>Second Field: <span type=\"type\" id=\"eventEditor_auth2field\" style=\"padding: 20px; border: 1px dashed black;\" ondrop=\"dropEl(event, this)\" ondragover=\"allowDrop(event)\"></span>";
+                document.getElementById("colorInput_EventEditor").value = rgbToHex(getComputedStyle(el).color);
+                document.getElementById("bgcolorInput_EventEditor").value = rgbToHex(getComputedStyle(el).backgroundColor);
+                if (el.getAttribute("authenticated")){
+                    document.getElementById("EventEditor_btntype").value = 2;
+                        if (el.getAttribute("attributedItem1")){
+                            document.getElementById("eventEditor").setAttribute("parent", el.id);
+                            document.getElementById("Event_ExpandableBtn").innerHTML=Event_Expandable_Txt;
+                            el.setAttribute("authenticated", "true");
+                            document.getElementById(el.getAttribute("attributedItem1")).hidden = true;
+                            document.getElementById("eventEditor_auth1field").appendChild(document.getElementById(el.getAttribute("attributedItem1")));
+                            document.getElementById("eventEditor_auth1field").innerHTML += "Item";
+                            el.removeAttribute("attributedItem1");
+                        }
+                };
+                document.getElementById("EventEditor_btntype").addEventListener("change", (ev) => {
+                    if (ev.target.value == 2){
+                        document.getElementById("eventEditor").setAttribute("parent", el.id);
+                        document.getElementById("Event_ExpandableBtn").innerHTML=Event_Expandable_Txt;
+                        document.getElementById("EventEditor_btntype").value = 2;
+                        el.setAttribute("authenticated", "true");
+                    }
+                    if(ev.target.value == 1){
+                        document.getElementById("Event_ExpandableBtn").innerHTML = "";
+                        // document.getElementById("eventEditor").innerHTML = document.getElementById("eventEditor").innerHTML.split("<br>First Field: <input type=\"type\" id=\"eventEditor_auth1field\">")[0];
+                        // ev.target.value = 1;
+                    }
+                });
+            }else if (el.classList[0] == "lbl"){
+                console.log(el.innerHTML.split("<span contenteditable=\"true\">")[1].split("</span>")[0]);
+                document.getElementById("eventEditor").innerHTML += "Label<br>Text: <textarea id=\"__LabelEventEditor\" onchange=\"LabelChange()\">"+el.innerHTML.split("<span contenteditable=\"true\">")[1].split("</span>")[0]+"</textarea><br>Color: <input type=\"color\" id=\"colorInput_EventEditor\" value=\"#000000\">";
+                document.getElementById("colorInput_EventEditor").addEventListener('input', function() {
+                    const color = this.value;
+                    el.style.color = color;
+                });
+            }else if (el.classList[0] == "input"){
+                document.getElementById("eventEditor").innerHTML += "Input";
+            };
+        };
+        function drop(ev) {
+            ev.preventDefault();
+            if (alreadyDroppedEF){
+                alreadyDroppedEF = false;
+                return;
+            };
+            var data = ev.dataTransfer.getData("text");
+            var draggedElement = document.getElementById(data);
             var dropArea = ev.target;
-
+            draggedElement.classList.add("draggable");
             // Get the mouse position relative to the dropArea
             var divRect = document.getElementById("div1").getBoundingClientRect()
             var rect = dropArea.getBoundingClientRect();
@@ -60,7 +206,23 @@
             draggedElement.style.left = x + 'px';
             draggedElement.style.top = y + 'px';
             var alreadyDropped = draggedElement.classList.contains('alreadyDropped');
-            draggedElement.contentEditable=true;
+            if (draggedElement.classList.contains("btn")) {
+                draggedElement.contentEditable=true;
+            }else if(draggedElement.classList.contains("lbl")){
+                if (alreadyDropped == false) {
+                draggedElement.innerHTML = "<span contenteditable=\"true\">Label</span>&nbsp;&nbsp;";
+                }
+                draggedElement.style.width = "20pw";
+            }else if(draggedElement.classList.contains("div")){
+                draggedElement.style.width = "50vw";
+                draggedElement.style.height = "50vh";
+                draggedElement.style.border = "medium dashed black";
+            }else if(draggedElement.classList.contains("authform")){
+                draggedElement.innerHTML = "<label for=\"fn"+authformNum+"\">Username</label>&nbsp;<input type=\"text\" id=\"fn"+authformNum+"\"><br><br><label for=\"ps"+authformNum+"\">Password</label>&nbsp;<input type=\"password\" id=\"ps"+authformNum+"\"><br><br><button class=\"btn\">Login</button>";
+            }
+            draggedElement.addEventListener("click", (ev)=>{
+                eventEditorLoad(ev.target);
+            });
             draggedElement.removeAttribute('disabled');
             draggedElement.focus();
             draggedElement.classList.add("alreadyDropped");
@@ -74,7 +236,7 @@
 
             if (alreadyDropped) {
             }else{
-            document.getElementById("dragThing").innerHTML = "<center><button id=\"btn\" ondragstart=\"drag(event)\" draggable=\"true\" class=\"draggable\" style=\"left: 20px\">Button</button>    <br><br><br><span id=\"lbl\" ondragstart=\"drag(event)\" draggable=\"true\" class=\"draggable\" style=\"left: 20px\">Label</span>    <br><br><br><input id=\"input\" ondragstart=\"drag(event)\" type=\"text\" placeholder=\"Input\" class=\"draggable\" draggable=\"true\" style=\"left: 20px\" disabled></center>";
+            document.getElementById("dragThing").innerHTML = defaultValueOfElements;
             }
         }
         // document.getElementById("text").value = document.getElementById("text").value.replaceAll("<br>", "\n");
@@ -82,7 +244,7 @@
             navigator.clipboard.writeText(window.location.origin + "/sites?page="+localStorage.username+"_"+"{{page}}");
         }
         function preview(){
-            window.open("/sites?page="+localStorage.username+"_"+"{{page}}", '_blank');
+            window.open("/sites?page="+"{{page}}", '_blank');
         }
         function Publish(template, content) {
             if (localStorage.getItem("File"+name+"name") != document.getElementById("website_name").innerHTML){
@@ -146,16 +308,21 @@
         }
         function publish(){
             var code = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Document</title>\n</head>\n<body>\n";
+                ;
             Array.from(document.getElementById("div1").children).forEach((element) => {
-                if(element.id == "btn"){
-                    code += "<button id=\"btn\" style=\"position: absolute; left: "+element.style.left+"; top:"+element.style.top+"\">"+element.innerHTML+"</button>\n";
-                }else if(element.id == "lbl"){
-                    code += "<p id=\"lbl\" style=\"position: absolute; left: "+element.style.left+"; top:"+element.style.top+"\">"+element.innerHTML+"</p>\n";
-                }else if(element.id=="input"){
-                    code += "<input type=\"text\" id=\"lbl\" style=\"position: absolute; left: "+element.style.left+"; top:"+element.style.top+"\" placeholder=\""+element.value+"\">\n";
+                if(element.classList.contains("btn")){
+                    var if1 = "";
+                    if (element.getAttribute("authenticated")){
+                        if1 = "authenticated=\"true\"";
+                    };
+                    code += "<button draggable=\"true\"  id=\""+element.id+"\"class=\"btn draggable\" "+if1+" ondragstart=\"drag(event)\" style=\"position: absolute; left: "+element.style.left+"; top:"+element.style.top+";background-color: "+element.style.backgroundColor+"; color: "+element.style.color+"\">"+element.innerHTML+"</button>\n";
+                }else if(element.classList.contains("lbl")){
+                    code += "<p draggable=\"true\"  id=\""+element.id+"\"class=\"lbl draggable\" ondragstart=\"drag(event)\"  style=\"position: absolute; left: "+element.style.left+"; top:"+element.style.top+";background-color: "+element.style.backgroundColor+"; color: "+element.style.color+"\">"+element.innerHTML+"</p>\n";
+                }else if(element.classList.contains("input")){
+                    code += "<input type=\"text\" draggable=\"true\"  id=\""+element.id+"\"class=\"lbl draggable\" ondragstart=\"drag(event)\"  style=\"position: absolute; left: "+element.style.left+"; top:"+element.style.top+";background-color: "+element.style.backgroundColor+"; color: "+element.style.color+"\" placeholder=\""+element.value+"\">\n";
                 };
             });
-            code += "<style>#btn {width: 100px;height: 50px;};</style>\n</body>\n</html>"
+            code += "<style>.btn {width: 100px;height: 50px;};</style>\n</body>\n</html>"
             console.log(code);
             // console.log(document.getElementById("text").value);
             Publish("{{page}}", code);
@@ -165,10 +332,29 @@
         .draggable {
             position: absolute;
         }
-        button.draggable{
+        button.btn{
             width: 100px;
             height: 50px;
         }
+
+        .lbl.draggable {
+            color: black;
+            background-color: rgba(0, 0, 0, 0); 
+        }
+        .btn.draggable {
+            color: black;
+            background-color: #EFEFEF
+        }
+        #dragThing {
+            float: left; 
+            padding: 100px;
+            height: 64vh;
+            border: 10px solid black;
+            overflow: auto;
+        }
+        textarea {
+            resize: none;
+        };
     </style>
 </body>
 </html>

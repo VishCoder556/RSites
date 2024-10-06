@@ -1,2 +1,2 @@
-gcc main.c
-./a.out
+pip install -r requirements.txt
+apt-get install build-essentials
