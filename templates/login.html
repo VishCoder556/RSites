@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
 </head>
-<body>
+<body oncontextmenu="return false">
     <div id="login1">
         <p>The owner has a special code you need to enter. Make sure to enter it properly.</p>
         <input type="password" id="password" placeholder="Enter your password">
@@ -21,6 +21,25 @@
     <p id="error" style="color:red;"></p>
 
     <script>
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.onkeydown = (e) => {
+            console.log(e.key);
+            if (e.key == 123) {
+                e.preventDefault();
+            }
+            if (e.ctrlKey && e.shiftKey && e.key == 'I') {
+                e.preventDefault();
+            }
+            if (e.ctrlKey && e.shiftKey && e.key == 'C') {
+                e.preventDefault();
+            }
+            if (e.ctrlKey && e.shiftKey && e.key == 'J') {
+                e.preventDefault();
+            }
+            if (e.ctrlKey && e.key == 'U') {
+                e.preventDefault();
+            }
+        };
         var accountAlreadyCreated = false;
         var loggined = false;
         if (localStorage.username && localStorage.password){accountAlreadyCreated = true;};
