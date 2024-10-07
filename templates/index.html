@@ -44,6 +44,8 @@ body {
   <a onClick="signOut()">Sign out</a>
 </div>
 
+<button onClick="change()">Change</button>
+
 <div style="padding-left:16px">
   <h2>Ramesh Sites</h2>
   <p>At Ramesh Sites, we are proud to serve you. The purpose of Ramesh Sites is to take an idea like Google Sites and put it into simpler terms. I want to make it clear that I 
@@ -64,6 +66,10 @@ body {
     localStorage.login = "";
     window.location.href = "/login";
   }
+  function change(){
+    console.log("ME");
+    window.location.replace("https://classroom.google.com");
+  };
 </script>
 </body>
 </html>
