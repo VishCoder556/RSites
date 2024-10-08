@@ -45,6 +45,7 @@
         <center><button id="btn" ondragstart="drag(event)" draggable="true" class="btn" style="left: 20px">Button</button>
             <br><br><br><span ondragstart="drag(event)" draggable="true" class="lbl" style="left: 20px">Label</span>
             <br><br><br><input ondragstart="drag(event)" type="text" placeholder="Input" class="input" draggable="true" style="left: 20px" disabled>
+            <br><br><br><span ondragstart="drag(event)" draggable="true" class="embed" style="left: 20px">Embed</span>
             
         </center>
     </div>
@@ -84,7 +85,7 @@
         var divNum = 0;
         var btnNum = 0;
         var lblNum = 0;
-        var authformNum = 0;
+        var embedNum = 0;
         var selectedEventEditor;
         var alreadyDroppedE = false;
         var alreadyDroppedEF = false;
@@ -111,7 +112,7 @@
         function ButtonTextChanged(){
             selectedEventEditor.innerHTML = document.getElementById("__ButtonText").value;
         };
-        var defaultValueOfElements = "<center><button ondragstart=\"drag(event)\" draggable=\"true\" class=\"btn\" style=\"left: 20px\">Button</button>    <br><br><br><span ondragstart=\"drag(event)\" draggable=\"true\" class=\"lbl\" style=\"left: 20px\">Label</span>    <br><br><br><input ondragstart=\"drag(event)\" type=\"text\" placeholder=\"Input\" class=\"input\" draggable=\"true\" style=\"left: 20px\" disabled>";
+        var defaultValueOfElements = "<center><button ondragstart=\"drag(event)\" draggable=\"true\" class=\"btn\" style=\"left: 20px\">Button</button>    <br><br><br><span ondragstart=\"drag(event)\" draggable=\"true\" class=\"lbl\" style=\"left: 20px\">Label</span>    <br><br><br><input ondragstart=\"drag(event)\" type=\"text\" placeholder=\"Input\" class=\"input\" draggable=\"true\" style=\"left: 20px\" disabled><br><br><br><span ondragstart=\"drag(event)\" draggable=\"true\" class=\"embed\" style=\"left: 20px\">Embed</span>";
         
         function dropEl(ev, host){
             ev.preventDefault();
@@ -205,6 +206,26 @@
                 });
             }else if (el.classList[0] == "input"){
                 document.getElementById("eventEditor").innerHTML += "Input";
+            }else if(el.classList[0] == "embed"){
+                document.getElementById("eventEditor").innerHTML += "Embed Element<br><select name=\"type\" id=\"eventEditorembed_choose\"><option value=1 selected>Embed Link</option><option value=2>Embed Code</option></select><br><br><span id=\"eventeditorembed\"><input type=\"text\" value=\"https://www.google.com\" id=\"eventeditorembedlink\"></span><button onClick=\"eventeditorembedembed()\">Embed</button>";
+                document.getElementById("eventEditorembed_choose").addEventListener("change", (ev) => {
+                    if (ev.target.value == 1){
+                        document.getElementById("eventeditorembed").innerHTML = "<input type=\"text\" value=\"https://www.google.com\" id=\"eventeditorembedlink\">";
+                    }else if (ev.target.value == 2){
+                        document.getElementById("eventeditorembed").innerHTML = "<textarea id=\"eventeditorembedcode\" rows=\"32\" cols=\"24\"></textarea>";
+                    };
+                });
+            };
+        };
+        function eventeditorembedembed(){
+            if(document.getElementById("eventEditorembed_choose").value == 1){
+                selectedEventEditor.innerHTML = "<iframe src=\""+document.getElementById("eventeditorembedlink").value+"\"></iframe>&nbsp;&nbsp;&nbsp;&nbsp;";
+                selectedEventEditor.setAttribute("embed", document.getElementById("eventeditorembedlink").value);
+                // document.getElementById("eventeditorembedlink");
+            }else if(document.getElementById("eventEditorembed_choose").value == 2){
+                selectedEventEditor.innerHTML = "<div style=\"border: 1px solid black;resize:both;overflow: auto;\">"+document.getElementById("eventeditorembedcode").value+"</div>&nbsp;&nbsp;&nbsp;&nbsp;";
+                document.getElementById("eventeditorembed");
+                selectedEventEditor.setAttribute("embedCode", "true");
             };
         };
         function drop(ev) {
@@ -348,6 +369,13 @@
                     code += "<p draggable=\"true\"  id=\""+element.id+"\"class=\"lbl draggable\" ondragstart=\"drag(event)\"  style=\"position: absolute; left: "+element.style.left+"; top:"+element.style.top+";background-color: "+element.style.backgroundColor+"; color: "+element.style.color+"\">"+element.innerHTML+"</p>\n";
                 }else if(element.classList.contains("input")){
                     code += "<input type=\"text\" draggable=\"true\"  id=\""+element.id+"\"class=\"input draggable\" ondragstart=\"drag(event)\"  style=\"position: absolute; left: "+element.style.left+"; top:"+element.style.top+";background-color: "+element.style.backgroundColor+"; color: "+element.style.color+"\" placeholder=\""+element.value+"\">\n";
+                }else if(element.classList.contains("embed")){
+                    if (element.getAttribute("embedcode")){
+                        element.children[0].style.resize = "none";
+                        code += element.innerHTML;
+                    }else {
+                        code += "<iframe src=\""+element.getAttribute("embed")+"\"></iframe>";
+                    };
                 };
             });
             var script = document.createElement('script');
@@ -360,7 +388,6 @@
             });
             code += "</"+"script"+">";
             code += "<style>.btn {width: 100px;height: 50px;};</style>\n</body>\n</html>"
-            console.log(code);
             Publish("{{page}}", code);
         }
     </script>
@@ -376,6 +403,10 @@
         .lbl.draggable {
             color: black;
             background-color: rgba(0, 0, 0, 0); 
+        }
+        iframe {
+            resize: both;
+
         }
         .btn.draggable {
             color: black;
