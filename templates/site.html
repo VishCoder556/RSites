@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="title">{{page}}</title>
+</head>
+<body>
+    <style>
+        /* Responsive styles for all devices */
+        html, body {
+            max-width: 100vw;
+            overflow-x: hidden;
+        }
+        #dragThing, #div1 {
+            box-sizing: border-box;
+        }
+        @media (max-width: 1200px) {
+            #dragThing {
+                padding: 40px;
+                height: 40vh;
+                width: 100%;
+                border-width: 6px;
+            }
+            #div1 {
+                padding: 30px;
+                height: 50vh;
+                width: 98vw;
+                border-width: 6px;
+            }
+            .btn, .lbl, .input, .embed {
+                font-size: 1.1em;
+            }
+        }
+        @media (max-width: 900px) {
+            #dragThing {
+                padding: 10px;
+                height: 30vh;
+                width: 100%;
+                border-width: 4px;
+            }
+            #div1 {
+                padding: 10px;
+                height: 40vh;
+                width: 98vw;
+                border-width: 4px;
+            }
+            .btn, .lbl, .input, .embed {
+                font-size: 1em;
+            }
+        }
+        @media (max-width: 600px) {
+            #dragThing {
+                padding: 2vw;
+                height: 20vh;
+                width: 100vw;
+                border-width: 2px;
+            }
+            #div1 {
+                padding: 2vw;
+                height: 30vh;
+                width: 98vw;
+                border-width: 2px;
+            }
+            .btn, .lbl, .input, .embed {
+                font-size: 0.9em;
+            }
+            button, input, textarea {
+                font-size: 1em;
+                padding: 8px 12px;
+            }
+            #website_name {
+                font-size: 1em;
+                width: 90vw;
+            }
+        }
+        /* Prevent text selection globally */
+        body, #div1, .draggable, .bounding-box {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        /* Allow selection for input, textarea, and contenteditable */
+        input, textarea, [contenteditable="true"] {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+        .draggable {
+            position: absolute;
+            transition: left 0.2s, top 0.2s;
+            box-sizing: border-box;
+        }
+        .bounding-box {
+            border: 2px dashed #007bff;
+            position: absolute;
+            pointer-events: auto;
+            z-index: 1000;
+            box-sizing: border-box;
+            overflow: visible;
+        }
+        .bounding-box:not(.active) {
+            border: none;
+        }
+        .handle {
+            width: 10px;
+            height: 10px;
+            background: #007bff;
+            border-radius: 50%;
+            position: absolute;
+            z-index: 1001;
+            cursor: pointer;
+            pointer-events: auto;
+            margin: 0;
+            padding: 0;
+            display: none;
+        }
+        .bounding-box.active .handle {
+            display: block;
+        }
+        button.btn{
+            width: 100px;
+            height: 50px;
+        }
+        .lbl.draggable {
+            color: black;
+            background-color: rgba(0, 0, 0, 0); 
+        }
+        .btn.draggable {
+            color: black;
+            background-color: #EFEFEF
+        }
+        #dragThing {
+            display: flex;
+            flex-direction: column;
+            max-height: 90vh;
+            margin: 0;
+            position: absolute;
+            right: 0%;
+            height: 100%;
+            width: 24.5%;
+            border: 10px solid black;
+            overflow: auto;
+        }
+        textarea {
+            resize: none;
+        }
+        #div1 {
+            display: flex;
+            flex-direction: column;
+            max-height: 90vh;
+            margin: 0;
+            padding: 0;
+            border: 5px solid rgb(92, 92, 92);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+    </style>
+    <button onClick="publish()" style="cursor: pointer; background-color: #044370; /* Green */border: none;color: white;padding: 15px 32px;text-align: center;text-decoration: none;display: inline-block;font-size: 16px;">Publish</button>
+    <span style="width: 200px;" contenteditable="true" id="website_name">Untitled</span>
+    &nbsp;&nbsp;&nbsp;<span id="error" style="color: red"></span>
+    <button onClick="copyLink()" style="cursor: pointer; float: right; background-color: #04AA6D; /* Green */border: none;color: white;padding: 15px 32px;text-align: center;text-decoration: none;display: inline-block;font-size: 16px;">Copy Link</button>
+    <button onClick="preview()" style="cursor: pointer; float: right; background-color: #04AA6D; /* Green */border: none;color: white;padding: 15px 32px;text-align: center;text-decoration: none;display: inline-block;font-size: 16px; margin-right: 20px;">Preview</button>
+    <br><br>
+    <div id="dragThing">
+        <center><button id="btn" ondragstart="drag(event)" draggable="true" class="btn" style="left: 20px">Button</button>
+            <br><br><br><span ondragstart="drag(event)" draggable="true" class="lbl" style="left: 20px;font-size:19px;text-align: center;">Label</span>
+            <br><br><br><input ondragstart="drag(event)" type="text" placeholder="Input" class="input" draggable="true" style="left: 20px" disabled>
+            <br><br><br><span ondragstart="drag(event)" draggable="true" class="embed" style="left: 20px">Embed</span>
+            
+        </center>
+    </div>
+    <div style="position: absolute; height: 100%; width: 75%;left: 0%;" id="div1" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <span id="eventEditor" style="float: right; text-align: center; width: 15vw;"></span>
+    </div>
+    <span id="___HTMLTEXT" style="color: rgba(0, 0, 0, 0); display: none;" hidden>{{text}}</span>
+    <script>
+        var updateHistory = [];
+        var ptr = 0;
+        
+        function addUpdate(){
+            updateHistory.push(document.getElementById('div1').innerHTML);
+            ptr++;
+        };
+
+        function backUpdate(){
+            if (ptr > 0) {
+                ptr--;
+                document.getElementById('div1').innerHTML = updateHistory[ptr == 0 ? 0 : ptr - 1];
+            }
+        };
+
+        function forwardUpdate(){
+            if (ptr < updateHistory.length) {
+                document.getElementById('div1').innerHTML = updateHistory[ptr];
+                ptr++;
+            }
+        };
+
+        document.addEventListener('keydown', (event)=>{
+            Array.from(document.getElementById('div1').children).forEach((element)=>{
+                if (element.classList.contains('bounding-box') && element.classList.contains('active')){
+                    if (event.ctrlKey && event.key == 'Backspace'){
+                        addUpdate();
+                        element.remove();
+                        addUpdate();
+                    };
+                };
+            })
+            if (event.ctrlKey && event.key == 'u') {
+                backUpdate();
+            }
+            if (event.ctrlKey && event.key == 'r') {
+                forwardUpdate();
+            }
+        });
+        function addBoundingBoxWithHandles(element, rect) {
+            document.querySelectorAll('.bounding-box').forEach(box => {
+                box.classList.remove('active');
+            });
+            if (element.parentElement && element.parentElement.classList && element.parentElement.classList.contains('bounding-box')) return;
+            const boundingBox = document.createElement('div');
+            boundingBox.className = 'bounding-box';
+            boundingBox.style.position = 'absolute';
+            boundingBox.style.left = element.style.left;
+            boundingBox.style.top = element.style.top;
+            element.style.left = '0';
+            element.style.top = '0';
+            boundingBox.style.width = rect.width + 4 + 'px';
+            boundingBox.style.height = rect.height + 4 + 'px';
+            boundingBox.appendChild(element);
+            element.addEventListener('mousedown', function(e) {
+                if (e.target.classList.contains('handle')) return;
+                document.querySelectorAll('.bounding-box').forEach(box => {
+                    box.classList.remove('active');
+                });
+                boundingBox.classList.add('active');
+                eventEditorLoad(e.target);
+            });
+            const handlePositions = [
+                {class: 'nw', style: {left: '-10px', top: '-10px'}},
+                {class: 'ne', style: {left: (rect.width - 1) + 'px', top: '-10px'}},
+                {class: 'sw', style: {left: '-10px', top: (rect.height - 2) + 'px'}},
+                {class: 'se', style: {left: (rect.width - 1) + 'px', top: (rect.height - 2) + 'px'}}
+            ];
+            const handles = {};
+            handlePositions.forEach(pos => {
+                const handle = document.createElement('div');
+                handle.className = 'handle handle-' + pos.class;
+                handle.style.position = 'absolute';
+                Object.entries(pos.style).forEach(([key, value]) => {
+                    handle.style[key] = value;
+                });
+                boundingBox.appendChild(handle);
+                handles[pos.class] = handle;
+                handle.addEventListener('mousedown', function(e) {
+                    addUpdate();
+                    e.stopPropagation();
+                    let startX = e.clientX, startY = e.clientY;
+                    let origWidth = boundingBox.offsetWidth;
+                    let origHeight = boundingBox.offsetHeight;
+                    let origLeft = parseInt(boundingBox.style.left);
+                    let origTop = parseInt(boundingBox.style.top);
+                    function onMouseMove(ev) {
+                        let dx = ev.clientX - startX;
+                        let dy = ev.clientY - startY;
+                        let newWidth = origWidth, newHeight = origHeight, newLeft = origLeft, newTop = origTop;
+                        if (pos.class === 'nw') {
+                            newWidth = origWidth - dx;
+                            newHeight = origHeight - dy;
+                            newLeft = origLeft + dx;
+                            newTop = origTop + dy;
+                        } else if (pos.class === 'ne') {
+                            newWidth = origWidth + dx;
+                            newHeight = origHeight - dy;
+                            newTop = origTop + dy;
+                        } else if (pos.class === 'sw') {
+                            newWidth = origWidth - dx;
+                            newHeight = origHeight + dy;
+                            newLeft = origLeft + dx;
+                        } else if (pos.class === 'se') {
+                            newWidth = origWidth + dx;
+                            newHeight = origHeight + dy;
+                        }
+                        newWidth = Math.max(30, newWidth);
+                        newHeight = Math.max(30, newHeight);
+                        boundingBox.style.width = newWidth + 2 + 'px';
+                        boundingBox.style.height = newHeight + 2 + 'px';
+                        boundingBox.style.left = newLeft + 'px';
+                        boundingBox.style.top = newTop + 'px';
+                        element.style.width = newWidth - 2 + 'px';
+                        element.style.height = newHeight - 2 + 'px';
+                        handles['nw'].style.left = '-10px'; handles['nw'].style.top = '-10px';
+                        handles['ne'].style.left = (newWidth - 1) + 'px'; handles['ne'].style.top = '-10px';
+                        handles['sw'].style.left = '-10px'; handles['sw'].style.top = (newHeight - 2) + 'px';
+                        handles['se'].style.left = (newWidth - 1) + 'px'; handles['se'].style.top = (newHeight - 2) + 'px';
+                    }
+                    function onMouseUp() {
+                        document.removeEventListener('mousemove', onMouseMove);
+                        document.removeEventListener('mouseup', onMouseUp);
+                    }
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
+                });
+            });
+            document.getElementById('div1').appendChild(boundingBox);
+            function dragBoth(target, element) {
+                let startX, startY, origLeft, origTop;
+                function onMouseDown(e) {
+                    if (e.target.classList.contains('handle')) return;
+                    document.querySelectorAll('.bounding-box').forEach(box => {
+                        box.classList.remove('active');
+                    });
+                    boundingBox.classList.add('active');
+                    e.preventDefault();
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    origLeft = parseInt(boundingBox.style.left);
+                    origTop = parseInt(boundingBox.style.top);
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
+                }
+                function onMouseMove(ev) {
+                    let newLeft = origLeft + ev.clientX - startX;
+                    let newTop = origTop + ev.clientY - startY;
+                    boundingBox.style.left = newLeft + 'px';
+                    boundingBox.style.top = newTop + 'px';
+                    const width = boundingBox.offsetWidth;
+                    const height = boundingBox.offsetHeight;
+                    if (typeof handles !== 'undefined') {
+                        handles['nw'].style.left = '-10px'; handles['nw'].style.top = '-10px';
+                        handles['ne'].style.left = (width - 1) + 'px'; handles['ne'].style.top = '-10px';
+                        handles['sw'].style.left = '-10px'; handles['sw'].style.top = (height - 2) + 'px';
+                        handles['se'].style.left = (width - 1) + 'px'; handles['se'].style.top = (height - 2) + 'px';
+                    }
+                }
+                function onMouseUp() {
+                    addUpdate();
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                }
+                element.addEventListener('mousedown', onMouseDown);
+            }
+            dragBoth(boundingBox, element);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var div1 = document.getElementById("div1");
+            var htmlText = document.getElementById("___HTMLTEXT");
+            if (div1) {
+                // Remove all bounding boxes and handles at the start
+                Array.from(div1.querySelectorAll('.bounding-box')).forEach(box => box.remove());
+                // Ensure eventEditor exists
+                var eventEditor = document.getElementById("eventEditor");
+                if (!eventEditor) {
+                    eventEditor = document.createElement('span');
+                    eventEditor.id = "eventEditor";
+                    eventEditor.style.cssText = "float: right; text-align: center; width: 15vw;";
+                    div1.appendChild(eventEditor);
+                }
+            }
+            if (div1 && htmlText && htmlText.innerText != "None"){
+                div1.innerHTML = htmlText.innerText.replaceAll("<!DOCTYPE html>", "").replaceAll("<!DOCTYPE html>", "").replaceAll("<meta charset=\"UTF-8\">", "").replaceAll("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">", "") + div1.innerHTML;
+                // Remove all bounding boxes and handles again in case htmlText added any
+                Array.from(div1.querySelectorAll('.bounding-box')).forEach(box => box.remove());
+                // Ensure eventEditor exists again
+                var eventEditor = document.getElementById("eventEditor");
+                if (!eventEditor) {
+                    eventEditor = document.createElement('span');
+                    eventEditor.id = "eventEditor";
+                    eventEditor.style.cssText = "float: right; text-align: center; width: 15vw;";
+                    div1.appendChild(eventEditor);
+                }
+                Array.from(div1.childNodes).forEach((element) => {
+                    if (element.id != 'eventEditor' && element.tagName != "TITLE" && element.tagName != "SCRIPT" && element.tagName != "STYLE" && element instanceof Element){
+                        if (element.getAttribute("authenticated")){
+                            element.removeAttribute("onclick");
+                        }
+                        element.setAttribute("onclick", "eventEditorLoad(event.target);");
+                    } else {
+                        element.remove();
+                    }
+                });
+                Array.from(div1.children).forEach((element) => {
+                    if (!element.classList.contains('bounding-box') && element.id !== "eventEditor") {
+                        var rect = element.getBoundingClientRect();
+                        addBoundingBoxWithHandles(element, rect);
+                    }
+                });
+            }
+        });
+        document.getElementById("title").innerHTML = "Site " + "{{page}}".substring("{{page}}".indexOf("_") + 1);
+        var name = "{{page}}";
+        var page_name = localStorage.getItem("File"+name+"name");
+        if (!page_name){
+            localStorage.setItem("File"+name+"name", "Untitled");
+        };
+        document.getElementById("website_name").innerHTML = localStorage.getItem("File"+name+"name");
+        var elementDropped = false;
+        var element;
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+        var inputNum = 0;
+        var divNum = 0;
+        var btnNum = 0;
+        var lblNum = 0;
+        var embedNum = 0;
+        var selectedEventEditor;
+        var alreadyDroppedE = false;
+        var alreadyDroppedEF = false;
+
+
+        function drag(ev) {
+            if (ev.target.classList.contains("alreadyDropped")) {
+                elementDropped = true;
+            };
+            element = ev.target;
+            eval(Array.from(ev.target.classList)[0] + "Num" + "++");
+            ev.target.id = eval(ev.target.classList[0] + "Num") + ev.target.classList[0];
+            ev.dataTransfer.setData("text", ev.target.id);
+        }
+        function ButtonTextChanged(){
+            selectedEventEditor.innerHTML = document.getElementById("__ButtonText").value;
+        };
+        var defaultValueOfElements = "<center><button ondragstart=\"drag(event)\" draggable=\"true\" class=\"btn\" style=\"left: 20px\">Button</button>    <br><br><br><span ondragstart=\"drag(event)\" draggable=\"true\" class=\"lbl\" style=\"left: 20px\">Label</span>    <br><br><br><input ondragstart=\"drag(event)\" type=\"text\" placeholder=\"Input\" class=\"input\" draggable=\"true\" style=\"left: 20px\" disabled><br><br><br><span ondragstart=\"drag(event)\" draggable=\"true\" class=\"embed\" style=\"left: 20px\">Embed</span>";
+        
+        function dropEl(ev, host){
+            addUpdate();
+            ev.preventDefault();
+            var data = ev.dataTransfer.getData("text");
+            var draggedElement = document.getElementById(data);
+            const clone = draggedElement.cloneNode(true);
+            document.getElementById("div1").appendChild(clone);
+            draggedElement.style.left = "auto";
+            draggedElement.style.top = "auto";
+            if (alreadyDroppedE){
+                host.innerHTML = "";
+            };
+            document.getElementById("dragThing").innerHTML = defaultValueOfElements;
+            if (!draggedElement.classList.contains("input")) {
+                console.error("Error: First Field for Authentication Button has to be a Text Input");
+                document.getElementById("error").innerHTML = "Authentication Field Has To Be Text Input";
+            }else {
+                draggedElement.hidden = true;
+                host.appendChild(draggedElement);
+                host.innerHTML += "Item";
+                document.getElementById("error").innerHTML = "";
+            };
+            if (host.id == "eventEditor_auth1field") {
+            document.getElementById(document.getElementById("eventEditor").getAttribute("parent")).setAttribute("attributedItem1", data);
+            }
+            if (host.id == "eventEditor_auth2field") {
+            document.getElementById(document.getElementById("eventEditor").getAttribute("parent")).setAttribute("attributedItem2", data);
+            }
+            alreadyDroppedEF = true;
+            alreadyDroppedE = true;
+            addUpdate();
+        }
+        function rgbToHex(rgb) {
+            const rgbArray = rgb.match(/\d+/g); // Extract the numeric values from the RGB string
+            return `#${((1 << 24) + (parseInt(rgbArray[0]) << 16) + (parseInt(rgbArray[1]) << 8) + parseInt(rgbArray[2])).toString(16).slice(1)}`;
+        }
+        function eventEditorLoad(el){
+            selectedEventEditor = el;
+            var div1 = document.getElementById("div1");
+            var eventEditor = document.getElementById("eventEditor");
+            if (!eventEditor && div1) {
+                eventEditor = document.createElement('span');
+                eventEditor.id = "eventEditor";
+                eventEditor.style.cssText = "float: right; text-align: center; width: 15vw;";
+                div1.appendChild(eventEditor);
+            }
+            if (!eventEditor) return;
+            eventEditor.innerHTML = "<center>Event editor</center><hr>";
+            if (el.classList[0] == "btn"){
+                document.getElementById("eventEditor").innerHTML += "Button<br>Button Text: <textarea id=\"__ButtonText\">"+el.innerHTML+"</textarea><br>Background Color: <input type=\"color\" id=\"bgcolorInput_EventEditor\" value=\"#EFEFEF\"><br>Color: <input type=\"color\" id=\"colorInput_EventEditor\" value=\"#000000\"><br>Button Type: <select name=\"type\" id=\"EventEditor_btntype\"><option value=1>Default</option><option value=2>Authentication</option></select><br><span id=\"Event_ExpandableBtn\"></span>";
+                document.getElementById("__ButtonText").addEventListener('input', function() {
+                    el.innerHTML = this.value;
+                });
+                document.getElementById("bgcolorInput_EventEditor").addEventListener('input', function() {
+                    addUpdate();
+                    const color = this.value;
+                    el.style.backgroundColor = color;
+                    addUpdate();
+                });
+                document.getElementById("colorInput_EventEditor").addEventListener('input', function() {
+                    const color = this.value;
+                    el.style.color = color;
+                });
+                var Event_Expandable_Txt="<br>First Field: <span type=\"type\" id=\"eventEditor_auth1field\" style=\"padding: 20px; border: 1px dashed black;\" ondrop=\"dropEl(event, this)\" ondragover=\"allowDrop(event)\"></span><br><br><br><br><br><br>Second Field: <span type=\"type\" id=\"eventEditor_auth2field\" style=\"padding: 20px; border: 1px dashed black;\" ondrop=\"dropEl(event, this)\" ondragover=\"allowDrop(event)\"></span>";
+                document.getElementById("colorInput_EventEditor").value = rgbToHex(getComputedStyle(el).color);
+                document.getElementById("bgcolorInput_EventEditor").value = rgbToHex(getComputedStyle(el).backgroundColor);
+                if (el.getAttribute("authenticated")){
+                    const btntype = document.getElementById("EventEditor_btntype");
+                    if (btntype) btntype.value = 2;
+                    const eventEditor = document.getElementById("eventEditor");
+                    if (eventEditor) eventEditor.setAttribute("parent", el.id);
+                    const expandableBtn = document.getElementById("Event_ExpandableBtn");
+                    if (expandableBtn) expandableBtn.innerHTML = Event_Expandable_Txt;
+                    if (el.getAttribute("attributedItem1")){
+                        const item1 = document.getElementById(el.getAttribute("attributedItem1"));
+                        if (item1) {
+                            clone = item1.cloneNode(true);
+                            const div1 = document.getElementById("div1");
+                            if (div1) div1.appendChild(clone);
+                            const auth1field = document.getElementById("eventEditor_auth1field");
+                            if (auth1field && item1) {
+                                auth1field.appendChild(item1);
+                                auth1field.innerHTML += "Item";
+                            }
+                            el.removeAttribute("attributedItem1");
+                        }
+                    }
+                    if (el.getAttribute("attributedItem2")){
+                        const item2 = document.getElementById(el.getAttribute("attributedItem2"));
+                        if (item2) {
+                            clone = item2.cloneNode(true);
+                            const div1 = document.getElementById("div1");
+                            if (div1) div1.appendChild(clone);
+                            const auth2field = document.getElementById("eventEditor_auth2field");
+                            if (auth2field && item2) {
+                                auth2field.appendChild(item2);
+                                auth2field.innerHTML += "Item";
+                            }
+                            el.removeAttribute("attributedItem2");
+                        }
+                    }
+                };
+                document.getElementById("EventEditor_btntype").addEventListener("change", (ev) => {
+                    if (ev.target.value == 2){
+                        document.getElementById("eventEditor").setAttribute("parent", el.id);
+                        document.getElementById("Event_ExpandableBtn").innerHTML=Event_Expandable_Txt;
+                        document.getElementById("EventEditor_btntype").value = 2;
+                        el.setAttribute("authenticated", "true");
+                    }
+                    if(ev.target.value == 1){
+                        document.getElementById("Event_ExpandableBtn").innerHTML = "";
+                        document.getElementById("eventEditor").innerHTML = document.getElementById("eventEditor").innerHTML.split("<br>First Field: <input type=\"type\" id=\"eventEditor_auth1field\">")[0];
+                        ev.target.value = 1;
+                    }
+                });
+            }else if (el.classList[0] == "lbl"){
+                document.getElementById("eventEditor").innerHTML += `Label<br>Text: <textarea id=\"__LabelEventEditor\">${el.innerHTML}</textarea><br>Color: <input type=\"color\" id=\"colorInput_EventEditor\" value=\"#000000\"><input type="range" id="_FontSize" min="0" max="100" value="${el.style.fontSize.split("px")[0]}">
+
+    <p>Value: <span id="_FontSize_Slider">${el.style.fontSize}</span></p>
+                    `;
+                document.getElementById("__LabelEventEditor").addEventListener('input', function() {
+                    el.innerHTML = "<span>" + this.value.replaceAll("\n", "<br>") + "</span>&nbsp;&nbsp;";
+                });
+
+                document.getElementById("_FontSize").addEventListener('input', function() {
+                    document.getElementById("_FontSize_Slider").innerHTML = el.style.fontSize;
+                    el.style.fontSize = `${this.value}px`;
+                });
+                document.getElementById("colorInput_EventEditor").addEventListener('input', function() {
+                    const color = this.value;
+                    el.style.color = color;
+                });
+            }else if (el.classList[0] == "input"){
+                document.getElementById("eventEditor").innerHTML += "Input<br>Placeholder: <textarea id=\"__InputPlaceHolderEventEditor\">"+el.getAttribute('placeholder')+"</textarea><br><br>Value: <textarea id=\"__InputValueEventEditor\">"+el.value+"</textarea><br>Color: <input type=\"color\" id=\"colorInput_EventEditor\" value=\"#000000\">";
+                document.getElementById("__InputPlaceHolderEventEditor").addEventListener('input', function() {
+                    el.setAttribute('placeholder', this.value);
+                });
+                document.getElementById("__InputValueEventEditor").addEventListener('input', function() {
+                    el.value = this.value;
+                });
+                document.getElementById("colorInput_EventEditor").addEventListener('input', function() {
+                    const color = this.value;
+                    el.style.color = color;
+                });
+            }else if(el.classList[0] == "embed"){
+                document.getElementById("eventEditor").innerHTML += "Embed Element<br><select name=\"type\" id=\"eventEditorembed_choose\"><option value=1 selected>Embed Link</option><option value=2>Embed Code</option></select><br><br><span id=\"eventeditorembed\"><input type=\"text\" value=\"https://www.google.com\" id=\"eventeditorembedlink\"></span><button onClick=\"eventeditorembedembed()\">Embed</button>";
+                document.getElementById("eventEditorembed_choose").addEventListener("change", (ev) => {
+                    if (ev.target.value == 1){
+                        document.getElementById("eventeditorembed").innerHTML = "<input type=\"text\" value=\"https://www.google.com\" id=\"eventeditorembedlink\">";
+                    }else if (ev.target.value == 2){
+                        document.getElementById("eventeditorembed").innerHTML = "<textarea id=\"eventeditorembedcode\" rows=\"32\" cols=\"24\"></textarea>";
+                    };
+                });
+            };
+        };
+        function eventeditorerase(){
+            document.getElementById("eventEditor").innerHTML = "";
+        }
+        function eventeditorembedembed(){
+            if(document.getElementById("eventEditorembed_choose").value == 1){
+                selectedEventEditor.innerHTML = "<iframe src=\""+document.getElementById("eventeditorembedlink").value+"\"></iframe>&nbsp;&nbsp;&nbsp;&nbsp;";
+                selectedEventEditor.setAttribute("embed", document.getElementById("eventeditorembedlink").value);
+                // document.getElementById("eventeditorembedlink");
+            }else if(document.getElementById("eventEditorembed_choose").value == 2){
+                selectedEventEditor.innerHTML = "<div style=\"border: 1px solid black;resize:both;overflow: auto;\">"+document.getElementById("eventeditorembedcode").value+"</div>&nbsp;&nbsp;&nbsp;&nbsp;";
+                document.getElementById("eventeditorembed");
+                selectedEventEditor.setAttribute("embedCode", "true");
+            };
+        };
+        function addHandle(element){
+            const rect = element.getBoundingClientRect();
+
+            const rotationHandle = document.createElement("div");
+            rotationHandle.className = "___rotationhandle"; 
+            rotationHandle.style.left = `${rect.left + rect.width / 2 - 5}px`;
+            rotationHandle.style.top = `${rect.top - 20}px`;
+
+            document.body.appendChild(rotationHandle);
+        }
+            document.getElementById('div1').addEventListener('click', (ev)=>{
+                if (ev.target == ev.currentTarget) {
+                    document.querySelectorAll('.bounding-box').forEach(box => {
+                        box.classList.remove('active');
+                    });
+                    eventeditorerase();
+                }
+            })
+        function drop(ev) {
+            addUpdate();
+            ev.preventDefault();
+            if (alreadyDroppedEF){
+                alreadyDroppedEF = false;
+                return;
+            };
+            var data = ev.dataTransfer.getData("text");
+            var draggedElement = document.getElementById(data);
+            var dropArea = ev.target;
+            draggedElement.classList.add("draggable");
+            // Get the mouse position relative to the dropArea
+            var divRect = document.getElementById("div1").getBoundingClientRect()
+            var rect = dropArea.getBoundingClientRect();
+            var x = ev.clientX - rect.left - divRect.left + 4;
+            var y = ev.clientY - rect.top + divRect.top - 13;
+
+            // Move the dragged element to the mouse position
+            draggedElement.style.left = x + 'px';
+            draggedElement.style.top = y + 'px';
+            var alreadyDropped = draggedElement.classList.contains('alreadyDropped');
+            if (draggedElement.classList.contains("btn")) {
+            }else if(draggedElement.classList.contains("lbl")){
+                if (alreadyDropped == false) {
+                draggedElement.innerHTML = "Label";
+                }
+                draggedElement.style.width = "20pw";
+            }else if(draggedElement.classList.contains("div")){
+                draggedElement.style.width = "50vw";
+                draggedElement.style.height = "50vh";
+                draggedElement.style.border = "medium dashed black";
+            }else if(draggedElement.classList.contains("authform")){
+                draggedElement.innerHTML = "<label for=\"fn"+authformNum+"\">Username</label>&nbsp;<input type=\"text\" id=\"fn"+authformNum+"\"><br><br><label for=\"ps"+authformNum+"\">Password</label>&nbsp;<input type=\"password\" id=\"ps"+authformNum+"\"><br><br><button class=\"btn\">Login</button>";
+            }
+            draggedElement.addEventListener("click", (ev)=>{
+                eventEditorLoad(ev.target);
+                event.stopPropagation();
+            });
+            draggedElement.removeAttribute('disabled');
+            draggedElement.focus();
+            draggedElement.classList.add("alreadyDropped");
+
+            
+            // Switch event editor to this element immediately after drop
+            eventEditorLoad(draggedElement);
+
+
+    // Global bounding box function used everywhere
+    function addBoundingBoxWithHandles(element, rect) {
+                // Add click event to element to activate bounding box and handles
+                // Hide all bounding boxes when focusing a new element
+                document.querySelectorAll('.bounding-box').forEach(box => {
+                    box.classList.remove('active');
+                });
+                // Remove existing bounding box if any
+                if (element.parentElement && element.parentElement.classList && element.parentElement.classList.contains('bounding-box')) return;
+
+                const boundingBox = document.createElement('div');
+                boundingBox.className = 'bounding-box';
+                boundingBox.style.position = 'absolute';
+                boundingBox.style.left = element.style.left;
+                boundingBox.style.top = element.style.top;
+                element.style.left = '0';
+                element.style.top = '0';
+                boundingBox.style.width = rect.width + 2 + 'px';
+                boundingBox.style.height = rect.height + 2 + 'px';
+
+                boundingBox.appendChild(element);
+
+                element.addEventListener('mousedown', function(e) {
+                    if (e.target.classList.contains('handle')) return;
+                    document.querySelectorAll('.bounding-box').forEach(box => {
+                        box.classList.remove('active');
+                    });
+                    boundingBox.classList.add('active');
+                    eventEditorLoad(e.target);
+                });
+
+                // Add four handles (one for each corner)
+                const handlePositions = [
+                    {class: 'nw', style: {left: '-10px', top: '-10px'}},
+                    {class: 'ne', style: {left: (rect.width - 1) + 'px', top: '-10px'}},
+                    {class: 'sw', style: {left: '-10px', top: (rect.height - 2) + 'px'}},
+                    {class: 'se', style: {left: (rect.width - 1) + 'px', top: (rect.height - 2) + 'px'}}
+                ];
+                // Store handles for later position updates
+                const handles = {};
+                handlePositions.forEach(pos => {
+                    const handle = document.createElement('div');
+                    handle.className = 'handle handle-' + pos.class;
+                    handle.style.position = 'absolute';
+                    Object.entries(pos.style).forEach(([key, value]) => {
+                        handle.style[key] = value;
+                    });
+                    boundingBox.appendChild(handle);
+                    handles[pos.class] = handle;
+                    // Resize logic for each handle
+                    handle.addEventListener('mousedown', function(e) {
+                        e.stopPropagation();
+                        let startX = e.clientX, startY = e.clientY;
+                        let origWidth = boundingBox.offsetWidth;
+                        let origHeight = boundingBox.offsetHeight;
+                        let origLeft = parseInt(boundingBox.style.left);
+                        let origTop = parseInt(boundingBox.style.top);
+                        function onMouseMove(ev) {
+                            let dx = ev.clientX - startX;
+                            let dy = ev.clientY - startY;
+                            let newWidth = origWidth, newHeight = origHeight, newLeft = origLeft, newTop = origTop;
+                            if (pos.class === 'nw') {
+                                newWidth = origWidth - dx;
+                                newHeight = origHeight - dy;
+                                newLeft = origLeft + dx;
+                                newTop = origTop + dy;
+                            } else if (pos.class === 'ne') {
+                                newWidth = origWidth + dx;
+                                newHeight = origHeight - dy;
+                                newTop = origTop + dy;
+                            } else if (pos.class === 'sw') {
+                                newWidth = origWidth - dx;
+                                newHeight = origHeight + dy;
+                                newLeft = origLeft + dx;
+                            } else if (pos.class === 'se') {
+                                newWidth = origWidth + dx;
+                                newHeight = origHeight + dy;
+                            }
+                            // Minimum size
+                            newWidth = Math.max(30, newWidth);
+                            newHeight = Math.max(30, newHeight);
+                            boundingBox.style.width = newWidth + 2 + 'px';
+                            boundingBox.style.height = newHeight + 2 + 'px';
+                            boundingBox.style.left = newLeft + 'px';
+                            boundingBox.style.top = newTop + 'px';
+                            element.style.width = newWidth - 2 + 'px';
+                            element.style.height = newHeight - 2 + 'px';
+                            // Update handle positions
+                            handles['nw'].style.left = '-10px'; handles['nw'].style.top = '-10px';
+                            handles['ne'].style.left = (newWidth - 1) + 'px'; handles['ne'].style.top = '-10px';
+                            handles['sw'].style.left = '-10px'; handles['sw'].style.top = (newHeight - 2) + 'px';
+                            handles['se'].style.left = (newWidth - 1) + 'px'; handles['se'].style.top = (newHeight - 2) + 'px';
+                        }
+                        function onMouseUp() {
+                            document.removeEventListener('mousemove', onMouseMove);
+                            document.removeEventListener('mouseup', onMouseUp);
+                        }
+                        document.addEventListener('mousemove', onMouseMove);
+                        document.addEventListener('mouseup', onMouseUp);
+                    });
+                });
+
+                document.getElementById('div1').appendChild(boundingBox);
+                // Show bounding box and handles for this element
+                boundingBox.classList.add('active');
+                element.focus();
+
+                function dragBoth(target, element) {
+                    let startX, startY, origLeft, origTop;
+                    function onMouseDown(e) {
+                        if (e.target.classList.contains('handle')) return;
+                        // Hide all bounding boxes except this one
+                        document.querySelectorAll('.bounding-box').forEach(box => {
+                            box.classList.remove('active');
+                        });
+                        boundingBox.classList.add('active');
+                        e.preventDefault();
+                        startX = e.clientX;
+                        startY = e.clientY;
+                        origLeft = parseInt(boundingBox.style.left);
+                        origTop = parseInt(boundingBox.style.top);
+                        document.addEventListener('mousemove', onMouseMove);
+                        document.addEventListener('mouseup', onMouseUp);
+                    }
+                    function onMouseMove(ev) {
+                        let newLeft = origLeft + ev.clientX - startX;
+                        let newTop = origTop + ev.clientY - startY;
+                        boundingBox.style.left = newLeft + 'px';
+                        boundingBox.style.top = newTop + 'px';
+                        // Move the element inside the bounding box, keep at (0,0)
+                        // Update handle positions after move
+                        const width = boundingBox.offsetWidth;
+                        const height = boundingBox.offsetHeight;
+                        if (typeof handles !== 'undefined') {
+                            handles['nw'].style.left = '-10px'; handles['nw'].style.top = '-10px';
+                            handles['ne'].style.left = (width - 1) + 'px'; handles['ne'].style.top = '-10px';
+                            handles['sw'].style.left = '-10px'; handles['sw'].style.top = (height - 2) + 'px';
+                            handles['se'].style.left = (width - 1) + 'px'; handles['se'].style.top = (height - 2) + 'px';
+                        }
+                    }
+                    function onMouseUp() {
+                        document.removeEventListener('mousemove', onMouseMove);
+                        document.removeEventListener('mouseup', onMouseUp);
+                    }
+                    element.addEventListener('mousedown', onMouseDown);
+                }
+
+                dragBoth(boundingBox, element);
+            }
+
+            if (!elementDropped) {
+                // Remove from dropArea if already present
+                var rect = draggedElement.getBoundingClientRect()
+                if (draggedElement.parentElement) draggedElement.parentElement.removeChild(draggedElement);
+                addBoundingBoxWithHandles(draggedElement, rect);
+            } else {
+                element.style.left = x + 'px';
+                element.style.top = y + 'px';
+                element = 0;
+                elementDropped = false;
+            }
+
+            if (alreadyDropped) {
+            } else {
+                document.getElementById("dragThing").innerHTML = defaultValueOfElements;
+            }
+            addUpdate();
+        }
+        // document.getElementById("text").value = document.getElementById("text").value.replaceAll("<br>", "\n");
+        function copyLink(){
+            navigator.clipboard.writeText(window.location.origin + "/sites?page="+localStorage.username+"_"+"{{page}}");
+        }
+        function preview(){
+            window.open("/sites?page="+"{{page}}", '_blank');
+        }
+        function Publish(template, content) {
+            if (localStorage.getItem("File"+name+"name") != document.getElementById("website_name").innerHTML){
+                fetch('/rename', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        old_name: localStorage.getItem("File"+name+"name"),
+                        new_name: document.getElementById("website_name").innerHTML,
+                        official_name: "{{page}}",
+                        username: localStorage.username
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        // Handle errors based on the response status
+                        throw new Error(`Error: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Route created successfully:', data);
+                    // Additional logic for successful creation can go here
+                })
+                .catch((error) => {
+                    console.error('Failed to create route:', error);
+                });
+                localStorage.setItem("File"+name+"name", document.getElementById("website_name").innerHTML)
+                localStorage.setItem("File"+localStorage.getItem("File"+name+"name")+"name", localStorage.getItem("File"+name+"name"));
+                localStorage.removeItem("File{{page}}name");
+                window.location.href = "/createSite?page="+document.getElementById("website_name").innerHTML;
+            };
+            fetch('/publish', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    template: template,
+                    content: content,
+                    username: localStorage.username
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    // Handle errors based on the response status
+                    throw new Error(`Error: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Route created successfully:', data);
+                // Additional logic for successful creation can go here
+            })
+            .catch((error) => {
+                console.error('Failed to create route:', error);
+            });
+
+        }
+        function publish(){
+            var code = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Document</title>\n</head>\n<body>\n";
+            var authenticatedElements = [];
+            Array.from(document.getElementById("div1").children).forEach((element) => {
+                if (element.classList.contains("bounding-box")){
+                    var element2 = element.cloneNode(true);
+                    element2.children[0].style.position = 'absolute';
+                    element2.children[0].style.left = element2.style.left;
+                    element2.children[0].style.top = element2.style.top;
+                    element2.children[0].removeAttribute('ondragstart');
+                    element2.children[0].removeAttribute('draggable');
+                    element2.children[0].classList.remove("draggable");
+                    // element2.children[0].classList.remove("alreadyDropped");
+                    code += element2.children[0].outerHTML;
+                }
+            });
+            var script = document.createElement('script');
+            code += "<script>";
+            authenticatedElements.forEach((el) => {
+                var attr1 = document.getElementById(el).getAttribute("attributeditem1");
+                var attr2 = document.getElementById(el).getAttribute("attributeditem2");
+                code += "var auth"+el+"=[\"\", \"\"];";
+                code += "function f"+el+"Auth(el) {auth"+el+" = [document.getElementById(\""+attr1+"\").value, document.getElementById(\""+attr2+"\").value]"+"}";
+            });
+            code += "</"+"script"+">";
+            code += "<style>.btn {width: 100px;height: 50px;};</style>\n</body>\n</html>"
+            Publish("{{page}}", code);
+        }
+    </script>
+    <style>
+        .draggable {
+            position: absolute;
+        }
+        button.btn{
+            width: 100px;
+            height: 50px;
+        }
+
+        .lbl.draggable {
+            color: black;
+            background-color: rgba(0, 0, 0, 0); 
+        }
+        iframe {
+            resize: both;
+
+        }
+        .btn.draggable {
+            color: black;
+            background-color: #EFEFEF
+        }
+        #dragThing {
+            float: left; 
+            padding: 100px;
+            height: 64vh;
+            border: 10px solid black;
+            overflow: auto;
+        }
+        textarea {
+            resize: none;
+        };
+    </style>
+</body>
+</html>
